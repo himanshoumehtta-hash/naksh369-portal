@@ -2,7 +2,9 @@
 const nextConfig = {
   typescript: { ignoreBuildErrors: true },
   eslint: { ignoreDuringBuilds: true },
-  serverExternalPackages: ['pdf-lib'],
+  experimental: {
+    serverComponentsExternalPackages: ['pdf-lib'],
+  },
   webpack: (config, { dev }) => {
     if (!dev) { config.cache = false; }
     return config;
