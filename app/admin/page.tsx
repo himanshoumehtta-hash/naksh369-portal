@@ -38,7 +38,7 @@ export default function AdminPage() {
     } finally { setLoading(false); }
   };
 
-  const viewReport = (html: string, name: string) => {
+  const renderReport = (html: string, name: string) => {
     const fullHtml = `<!DOCTYPE html>
 <html>
 <head>
@@ -71,6 +71,31 @@ export default function AdminPage() {
     if (win) {
       win.document.write(fullHtml);
       win.document.close();
+    }
+  };
+
+  const openReport = async (readingId: string, name: string, html?: string) => {
+    if (html) {
+      renderReport(html, name);
+      return;
+    }
+    // Fetch report from API if not in dashboard data
+    setActionMsg('⏳ Loading report...');
+    try {
+      const res = await fetch('/api/readings/get-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ readingId }),
+      });
+      const data = await res.json();
+      if (data.success && data.content_html) {
+        setActionMsg('');
+        renderReport(data.content_html, name);
+      } else {
+        setActionMsg('⚠ Report not found. Try Regenerate.');
+      }
+    } catch (e) {
+      setActionMsg('⚠ Could not load report.');
     }
   };
 
@@ -232,9 +257,7 @@ export default function AdminPage() {
                       )}
                       {reading.status === 'delivered' && (
                         <>
-                          {blueprint?.content_html && (
-                            <button onClick={() => viewReport(blueprint.content_html, profile?.first_name || 'Client')} className="btn-naksh btn-saffron" style={{ fontSize: '9px', padding: '10px 18px' }}>📄 View / Download Report</button>
-                          )}
+                          <button onClick={() => openReport(reading.id, profile?.first_name || 'Client', blueprint?.content_html)} className="btn-naksh btn-saffron" style={{ fontSize: '9px', padding: '10px 18px' }}>📄 View / Download Report</button>
                           {blueprint?.pdf_url && (
                             <a href={blueprint.pdf_url} target="_blank" rel="noopener noreferrer" className="btn-naksh btn-outline-teal" style={{ fontSize: '9px', padding: '10px 18px' }}>View PDF ↗</a>
                           )}
