@@ -38,6 +38,42 @@ export default function AdminPage() {
     } finally { setLoading(false); }
   };
 
+  const viewReport = (html: string, name: string) => {
+    const fullHtml = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>NAKSH369 Blueprint — ${name}</title>
+<style>
+  body { font-family: Georgia, serif; max-width: 800px; margin: 0 auto; padding: 40px; color: #3D2B1A; line-height: 1.7; background: #FDF8EF; }
+  h2 { color: #0D4A52; border-bottom: 2px solid #C9A84C; padding-bottom: 8px; margin-top: 28px; }
+  ul { padding-left: 20px; }
+  li { margin-bottom: 6px; }
+  .blueprint { background: #fff; padding: 40px; border: 1px solid #C9A84C; }
+  @media print { body { background: #fff; } .no-print { display: none; } }
+  .header { text-align: center; margin-bottom: 30px; }
+  .brand { font-size: 28px; letter-spacing: 3px; color: #E07B2A; font-weight: bold; }
+  .tagline { font-style: italic; color: #9A6E20; }
+  .print-btn { background: linear-gradient(135deg, #E07B2A, #B85D10); color: white; border: none; padding: 12px 30px; font-size: 14px; cursor: pointer; margin: 20px auto; display: block; border-radius: 4px; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="brand">NAKSH369</div>
+    <div class="tagline">Know Your Moment.®</div>
+  </div>
+  <button class="print-btn no-print" onclick="window.print()">📥 Download as PDF (Print → Save as PDF)</button>
+  ${html}
+  <p style="text-align:center;margin-top:40px;color:#A0896A;font-size:12px;">© ${new Date().getFullYear()} NAKSH369 · WhatsApp: +91 83559 04017</p>
+</body>
+</html>`;
+    const win = window.open('', '_blank');
+    if (win) {
+      win.document.write(fullHtml);
+      win.document.close();
+    }
+  };
+
   const approve = async (id: string, action: string) => {
     const res = await fetch('/api/admin/approve', {
       method: 'POST',
@@ -196,6 +232,9 @@ export default function AdminPage() {
                       )}
                       {reading.status === 'delivered' && (
                         <>
+                          {blueprint?.content_html && (
+                            <button onClick={() => viewReport(blueprint.content_html, profile?.first_name || 'Client')} className="btn-naksh btn-saffron" style={{ fontSize: '9px', padding: '10px 18px' }}>📄 View / Download Report</button>
+                          )}
                           {blueprint?.pdf_url && (
                             <a href={blueprint.pdf_url} target="_blank" rel="noopener noreferrer" className="btn-naksh btn-outline-teal" style={{ fontSize: '9px', padding: '10px 18px' }}>View PDF ↗</a>
                           )}

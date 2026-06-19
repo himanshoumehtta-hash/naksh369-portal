@@ -11,7 +11,7 @@ export async function GET(request: Request) {
     // Get ALL readings with profiles (bypass RLS using admin client)
     const { data: readings } = await supabaseAdmin
       .from('readings')
-      .select('*, client_profiles(*), blueprints(pdf_url, generation_status)')
+      .select('*, client_profiles(*), blueprints(pdf_url, content_html, generation_status)')
       .order('created_at', { ascending: false })
       .limit(100);
 
