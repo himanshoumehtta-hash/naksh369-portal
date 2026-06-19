@@ -1,0 +1,7 @@
+/auth/signup    /auth/signup/index.html    200
+/auth/login     /auth/login/index.html     200
+/reading        /reading/index.html        200
+/payment        /payment/index.html        200
+/dashboard      /dashboard/index.html      200
+/admin          /admin/index.html          200
+/*              /index.html                200
