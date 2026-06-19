@@ -1,8 +1,8 @@
 'use client';
+
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Nav from '@/components/Nav';
-import Footer from '@/components/Footer';
+import Link from 'next/link';
 
 function PaymentContent() {
   const router = useRouter();
@@ -27,100 +27,146 @@ function PaymentContent() {
     try {
       await fetch('/api/payment/notify', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ readingId, name }),
       });
       setSubmitted(true);
-    } catch { setSubmitted(true); }
-    finally { setLoading(false); }
+    } catch (err) {
+      console.error(err);
+      setSubmitted(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (submitted) return (
-    <div style={{ background: 'var(--cream-2)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
-      <div style={{ maxWidth: '480px', width: '100%', textAlign: 'center' }}>
-        <div style={{ fontFamily: 'var(--f-dev)', fontSize: '48px', color: 'var(--saff-deep)', marginBottom: '20px' }}>🙏</div>
-        <h1 className="naksh-sec-h" style={{ marginBottom: '24px' }}>Payment <em>Received</em></h1>
-        <div className="naksh-card" style={{ marginBottom: '24px', textAlign: 'left' }}>
-          <p style={{ fontFamily: 'var(--f-display)', fontSize: '16px', color: 'var(--warm-mid)', lineHeight: 1.7 }}>
-            Thank you, <strong style={{ color: 'var(--teal-deep)' }}>{name}</strong>. Your payment has been notified to NAKSH369.
-          </p>
-          <p style={{ fontFamily: 'var(--f-sans)', fontSize: '13px', color: 'var(--warm-muted)', marginTop: '12px' }}>
-            Your Life Blueprint will be delivered to your email within <strong style={{ color: 'var(--saff-deep)' }}>24–48 hours</strong> after verification.
-          </p>
+  if (submitted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-6">
+        <div className="max-w-md w-full text-center">
+          <div className="text-6xl mb-6">🙏</div>
+          <h1 className="text-3xl font-serif text-white mb-4">Payment Received!</h1>
+          <div className="card-cosmic mb-6">
+            <p className="text-gray-300 text-sm leading-relaxed">
+              Thank you, <span className="text-gold-400">{name}</span>. Your payment has been notified to NAKSH369.
+            </p>
+            <p className="text-gray-400 text-sm mt-3">
+              Your Life Blueprint will be delivered to your email within <span className="text-gold-400">24–48 hours</span>.
+            </p>
+          </div>
+          <Link href="/dashboard" className="btn-gold inline-block">View Dashboard →</Link>
         </div>
-        <a href="/dashboard" className="btn-naksh btn-saffron">View Dashboard →</a>
       </div>
-    </div>
-  );
+    );
+  }
 
   return (
-    <div style={{ background: 'var(--cream-2)', minHeight: '100vh', paddingBottom: '60px' }}>
-      <div className="naksh-page" style={{ maxWidth: '580px' }}>
-        <div style={{ padding: 'clamp(32px,5vw,60px) 0 32px' }}>
-          <div className="naksh-sec-label">Secure Payment</div>
-          <h1 className="naksh-sec-h">Complete Your <em>Reading</em></h1>
-          <p className="naksh-sec-sub">Scan the QR code below to pay via any UPI app</p>
+    <div className="min-h-screen py-10 px-6">
+      <div className="max-w-lg mx-auto">
+        <div className="text-center mb-8">
+          <Link href="/" className="text-gold-400 tracking-[0.3em] font-bold text-lg">NAKSH369</Link>
+          <h1 className="text-2xl font-serif text-white mt-4 mb-2">Complete Your Payment</h1>
+          <p className="text-gray-500 text-sm">Scan the QR code to pay via any UPI app</p>
         </div>
 
         {/* Amount */}
-        <div style={{ background: 'linear-gradient(135deg, var(--teal-deep), var(--teal-darker))', padding: '24px', marginBottom: '20px', textAlign: 'center', position: 'relative' }}>
-          <div style={{ fontFamily: 'var(--f-caps)', fontSize: '9px', letterSpacing: '3px', color: 'rgba(253,248,239,0.65)', marginBottom: '8px' }}>AMOUNT TO PAY</div>
-          <div style={{ fontFamily: 'var(--f-display)', fontSize: '60px', fontWeight: 300, color: 'var(--gold)', lineHeight: 1 }}>₹999</div>
-          <div style={{ fontFamily: 'var(--f-sans)', fontSize: '12px', color: 'rgba(253,248,239,0.65)', marginTop: '8px' }}>Life Blueprint — Full Reading</div>
+        <div className="card-cosmic text-center mb-6">
+          <p className="text-gray-400 text-xs uppercase tracking-widest mb-2">Amount to Pay</p>
+          <p className="text-gold-400 text-5xl font-serif font-light">₹999</p>
+          <p className="text-gray-500 text-sm mt-2">Life Blueprint — Full Reading</p>
         </div>
 
-        {/* QR Toggle */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-          {(['paytm', 'phonepe'] as const).map(qr => (
-            <button key={qr} onClick={() => setActiveQR(qr)}
-              style={{ flex: 1, padding: '10px', fontFamily: 'var(--f-caps)', fontSize: '9px', letterSpacing: '2px', cursor: 'pointer', transition: 'all 0.2s', border: activeQR === qr ? '1.5px solid var(--saffron)' : '1.5px solid var(--line)', background: activeQR === qr ? 'var(--saff-soft)' : 'var(--cream)', color: activeQR === qr ? 'var(--saff-deep)' : 'var(--warm-muted)' }}>
-              {qr === 'paytm' ? 'PAYTM QR' : 'PHONEPE QR'}
-            </button>
-          ))}
+        {/* QR Toggle Tabs */}
+        <div className="flex gap-2 mb-4">
+          <button
+            onClick={() => setActiveQR('paytm')}
+            className={`flex-1 py-2.5 text-xs font-medium rounded-sm border transition-colors ${
+              activeQR === 'paytm'
+                ? 'border-gold-500 text-gold-400 bg-gold-500/10'
+                : 'border-cosmic-700 text-gray-500 hover:border-gold-500/40'
+            }`}
+          >
+            Paytm QR
+          </button>
+          <button
+            onClick={() => setActiveQR('phonepe')}
+            className={`flex-1 py-2.5 text-xs font-medium rounded-sm border transition-colors ${
+              activeQR === 'phonepe'
+                ? 'border-gold-500 text-gold-400 bg-gold-500/10'
+                : 'border-cosmic-700 text-gray-500 hover:border-gold-500/40'
+            }`}
+          >
+            PhonePe QR
+          </button>
         </div>
 
-        {/* QR Card */}
-        <div className="naksh-card" style={{ marginBottom: '20px' }}>
-          <div style={{ background: 'white', borderRadius: '4px', padding: '20px', textAlign: 'center', marginBottom: '16px' }}>
-            <div style={{ fontFamily: 'var(--f-sans)', fontSize: '10px', color: '#666', marginBottom: '12px', letterSpacing: '1px' }}>
-              {activeQR === 'paytm' ? 'PAYTM · GPAY · BHIM · ALL UPI APPS' : 'PHONEPE APP'}
-            </div>
-            <img src={activeQR === 'paytm' ? '/paytm-qr.jpg' : '/phonepe-qr.jpg'}
-              alt={`${activeQR} QR Code`}
-              style={{ width: '200px', height: '200px', objectFit: 'contain', display: 'block', margin: '0 auto' }} />
-            <div style={{ fontFamily: 'var(--f-caps)', fontSize: '11px', color: 'var(--teal-deep)', marginTop: '12px', letterSpacing: '1px' }}>HIMANSHOU MEHTTA</div>
+        {/* QR Code */}
+        <div className="card-cosmic mb-6">
+          <p className="text-center text-gray-400 text-xs uppercase tracking-widest mb-4">
+            {activeQR === 'paytm' ? 'Scan with Paytm · GPay · BHIM' : 'Scan with PhonePe App'}
+          </p>
+          <div className="bg-white rounded-lg p-4 mb-4 text-center">
+            {activeQR === 'paytm' ? (
+              <img
+                src="/paytm-qr.jpg"
+                alt="Paytm UPI QR Code"
+                className="w-52 h-52 mx-auto object-contain"
+              />
+            ) : (
+              <img
+                src="/phonepe-qr.jpg"
+                alt="PhonePe QR Code"
+                className="w-52 h-52 mx-auto object-contain"
+              />
+            )}
+            <p className="text-xs font-bold text-gray-800 mt-3">HIMANSHOU MEHTTA</p>
           </div>
 
-          <div style={{ background: 'var(--cream-2)', border: '1px solid var(--line-soft)', padding: '16px', textAlign: 'center' }}>
-            <div style={{ fontFamily: 'var(--f-caps)', fontSize: '8px', letterSpacing: '2px', color: 'var(--gold-deep)', marginBottom: '8px' }}>UPI ID — COPY & PAY</div>
-            <div style={{ fontFamily: 'monospace', fontSize: '18px', color: 'var(--teal-deep)', fontWeight: 600, letterSpacing: '1px' }}>9167090026@ptsbi</div>
-            <div style={{ fontFamily: 'var(--f-sans)', fontSize: '11px', color: 'var(--warm-muted)', marginTop: '4px' }}>Works on all UPI apps</div>
+          {/* UPI ID */}
+          <div className="bg-cosmic-700/40 rounded-sm p-4 text-center">
+            <p className="text-gray-400 text-xs uppercase tracking-wider mb-2">UPI ID</p>
+            <p className="text-gold-400 text-xl font-mono tracking-wide">9167090026@ptsbi</p>
+            <p className="text-gray-500 text-xs mt-1">Copy and pay on any UPI app</p>
           </div>
         </div>
 
         {/* Steps */}
-        <div className="naksh-card" style={{ marginBottom: '24px' }}>
-          <div style={{ fontFamily: 'var(--f-caps)', fontSize: '9px', letterSpacing: '3px', color: 'var(--gold-deep)', marginBottom: '16px' }}>HOW TO PAY</div>
+        <div className="card-cosmic mb-6">
+          <p className="text-gray-400 text-xs uppercase tracking-widest mb-4">How to Pay</p>
           {[
-            'Open PhonePe, GPay, Paytm or BHIM',
-            'Tap the QR tab above for your preferred app',
-            'Scan QR code OR enter UPI ID manually',
-            'Enter amount ₹999 and complete payment',
-            'Click the button below to confirm',
-          ].map((step, i) => (
-            <div key={i} style={{ display: 'flex', gap: '14px', alignItems: 'flex-start', marginBottom: '12px' }}>
-              <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'var(--saff-soft)', border: '1px solid var(--gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: 'var(--f-display)', fontStyle: 'italic', fontSize: '14px', color: 'var(--saff-deep)' }}>{i + 1}</div>
-              <p style={{ fontFamily: 'var(--f-sans)', fontSize: '13px', color: 'var(--warm-mid)', lineHeight: 1.5, marginTop: '2px' }}>{step}</p>
+            ['1', 'Open PhonePe, GPay, Paytm or BHIM'],
+            ['2', 'Tap the QR tab above for your preferred app'],
+            ['3', 'Scan QR code OR enter UPI ID manually'],
+            ['4', 'Enter amount: ₹999 and complete payment'],
+            ['5', 'Click "I Have Paid" below'],
+          ].map(([num, text]) => (
+            <div key={num} className="flex gap-3 items-start mb-3">
+              <div className="w-5 h-5 rounded-full bg-gold-500/20 border border-gold-500/40 flex items-center justify-center shrink-0 mt-0.5">
+                <span className="text-gold-400 text-xs">{num}</span>
+              </div>
+              <p className="text-gray-300 text-sm">{text}</p>
             </div>
           ))}
         </div>
 
-        <button onClick={handlePaymentDone} disabled={loading} className="btn-naksh btn-saffron btn-full" style={{ fontSize: '12px', padding: '16px' }}>
-          {loading ? 'Notifying NAKSH369...' : '✓ I Have Paid ₹999'}
+        <button
+          onClick={handlePaymentDone}
+          disabled={loading}
+          className="btn-gold w-full py-4 text-base"
+        >
+          {loading ? 'Notifying NAKSH369...' : '✅ I Have Paid ₹999'}
         </button>
-        <p style={{ textAlign: 'center', fontFamily: 'var(--f-display)', fontStyle: 'italic', fontSize: '12px', color: 'var(--warm-muted)', marginTop: '12px', lineHeight: 1.5 }}>
-          Blueprint delivered within 24–48 hours after payment verification<br />
-          Questions? <a href="https://wa.me/918355904017" style={{ color: 'var(--saff-deep)' }}>WhatsApp: +91 83559 04017</a>
+
+        <p className="text-center text-gray-600 text-xs mt-4">
+          Blueprint delivered within 24–48 hours after payment verification
+        </p>
+
+        <div className="section-divider" />
+
+        <p className="text-center text-gray-600 text-xs">
+          Questions? WhatsApp: <span className="text-gold-500">+91 83559 04017</span>
         </p>
       </div>
     </div>
@@ -129,12 +175,12 @@ function PaymentContent() {
 
 export default function PaymentPage() {
   return (
-    <>
-      <Nav />
-      <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--cream-2)' }}><p style={{ fontFamily: 'var(--f-display)', color: 'var(--warm-muted)' }}>Loading payment...</p></div>}>
-        <PaymentContent />
-      </Suspense>
-      <Footer />
-    </>
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-400">Loading payment...</p>
+      </div>
+    }>
+      <PaymentContent />
+    </Suspense>
   );
 }
