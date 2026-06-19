@@ -1,0 +1,7 @@
+# Cloudflare Pages redirects
+/admin  /admin  200
+/dashboard  /dashboard  200
+/reading  /reading  200
+/payment  /payment  200
+/auth/login  /auth/login  200
+/auth/signup  /auth/signup  200
