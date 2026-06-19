@@ -1,9 +1,4 @@
 name = "naksh369"
-compatibility_date = "2024-01-01"
+compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
-
-[build]
-command = "npm run build"
-
-[site]
-bucket = ".vercel/output/static"
+pages_build_output_dir = ".vercel/output/static"
