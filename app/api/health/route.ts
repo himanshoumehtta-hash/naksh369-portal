@@ -1,17 +1,15 @@
 export const runtime = 'edge';
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
 
 export async function GET() {
-  try {
-    const { error } = await supabaseAdmin.from('users').select('id').limit(1);
-    return NextResponse.json({
-      success: true,
-      message: 'API is healthy',
-      db: error ? 'error' : 'connected',
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    return NextResponse.json({ success: false, message: 'API error' }, { status: 500 });
-  }
+  const claudeKey = process.env.CLAUDE_API_KEY;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  
+  return NextResponse.json({
+    status: 'ok',
+    claude_key_exists: !!claudeKey,
+    claude_key_length: claudeKey?.length || 0,
+    claude_key_prefix: claudeKey?.substring(0, 20) || 'NOT SET',
+    supabase_url_exists: !!supabaseUrl,
+  });
 }
