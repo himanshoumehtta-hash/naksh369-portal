@@ -1,5 +1,5 @@
 import { lifePathDescriptions } from './numerology';
-import { fetchAstrologyChart, formatChartForPrompt, BirthData } from './astrology';
+import { fetchAstrologyChart, BirthData } from './astrology';
 
 export interface BlueprintInput {
   name: string;
@@ -14,147 +14,118 @@ export interface BlueprintInput {
   readingType: string;
 }
 
-// Generate blueprint from raw astrology data (no AI)
 export async function generateBlueprintWithClaude(input: BlueprintInput): Promise<string> {
   const lifePathDesc = lifePathDescriptions[input.lifePathNumber] || 'A unique soul path';
   const currentYear = new Date().getFullYear();
 
-  // Fetch real astrology chart
   let chart: any = { source: 'fallback' };
   try {
-    const birthData: BirthData = {
+    chart = await fetchAstrologyChart({
       name: input.name,
       dob: input.dob,
       birthTime: input.birthTime || '12:00',
       birthPlace: input.birthPlace,
-    };
-    chart = await fetchAstrologyChart(birthData);
-  } catch (err) {
-    console.error('Chart fetch error:', err);
-  }
+    });
+  } catch (err) { console.error('Chart fetch error:', err); }
 
-  // Build HTML report from raw data
   let html = `<div class="blueprint">`;
-
-  // Header
   html += `<h2>Life Blueprint for ${input.name}</h2>`;
-  html += `<p><strong>Date of Birth:</strong> ${input.dob} | <strong>Birth Time:</strong> ${input.birthTime || 'Not provided'} | <strong>Birth Place:</strong> ${input.birthPlace}</p>`;
+  html += `<p><strong>Date of Birth:</strong> ${input.dob} | <strong>Time:</strong> ${input.birthTime || 'Not provided'} | <strong>Place:</strong> ${input.birthPlace}</p>`;
 
-  // Numerology Section
+  // 1. Numerology
   html += `<h2>1. Numerology Profile</h2>`;
   html += `<p><strong>Life Path Number ${input.lifePathNumber}:</strong> ${lifePathDesc}</p>`;
   html += `<ul>`;
-  html += `<li>Birthday Number: ${input.birthdayNumber}</li>`;
-  html += `<li>Personal Year ${currentYear}: ${input.personalYear}</li>`;
+  html += `<li><strong>Birthday Number:</strong> ${input.birthdayNumber}</li>`;
+  html += `<li><strong>Personal Year ${currentYear}:</strong> ${input.personalYear}</li>`;
   html += `</ul>`;
 
-  // Astrology Chart Section
-  if (chart.source !== 'fallback') {
-    html += `<h2>2. Vedic Astrology Chart</h2>`;
-    html += `<p><em>Chart data sourced from ${chart.source === 'astrologyapi' ? 'AstrologyAPI' : 'Prokerala'}</em></p>`;
+  // 2. AstrologyAPI rich data
+  if (chart.source === 'astrologyapi' && chart.astroDetails) {
+    const a = chart.astroDetails;
+    html += `<h2>2. Your Vedic Birth Profile</h2>`;
     html += `<ul>`;
-    
-    if (chart.sunSign) html += `<li><strong>Sun Sign:</strong> ${chart.sunSign}</li>`;
-    if (chart.moonSign) html += `<li><strong>Moon Sign:</strong> ${chart.moonSign}</li>`;
-    if (chart.risingSign) html += `<li><strong>Ascendant/Rising:</strong> ${chart.risingSign}</li>`;
-
-    // Nakshatra
-    if (chart.nakshatraDetails) {
-      const n = chart.nakshatraDetails;
-      if (n.nakshatra) {
-        const nakName = n.nakshatra?.name || n.nakshatra;
-        html += `<li><strong>Birth Nakshatra:</strong> ${nakName}</li>`;
-      }
-      if (n.chandra_rasi) {
-        const rasi = n.chandra_rasi?.name || n.chandra_rasi;
-        html += `<li><strong>Chandra Rasi (Moon Sign):</strong> ${rasi}</li>`;
-      }
-      if (n.soorya_rasi) {
-        const rasi = n.soorya_rasi?.name || n.soorya_rasi;
-        html += `<li><strong>Soorya Rasi (Sun Sign):</strong> ${rasi}</li>`;
-      }
-      if (n.additional_info || n.zodiac) {
-        const zodiac = n.zodiac?.name || '';
-        if (zodiac) html += `<li><strong>Zodiac:</strong> ${zodiac}</li>`;
-      }
-    }
+    if (a.ascendant) html += `<li><strong>Ascendant (Lagna):</strong> ${a.ascendant}</li>`;
+    if (a.sign) html += `<li><strong>Moon Sign (Rashi):</strong> ${a.sign}</li>`;
+    if (a.SignLord) html += `<li><strong>Sign Lord:</strong> ${a.SignLord}</li>`;
+    if (a.Naksahtra) html += `<li><strong>Nakshatra:</strong> ${a.Naksahtra}${a.Charan ? ' (Pada ' + a.Charan + ')' : ''}</li>`;
+    if (a.NaksahtraLord) html += `<li><strong>Nakshatra Lord:</strong> ${a.NaksahtraLord}</li>`;
+    if (a.Tithi) html += `<li><strong>Tithi:</strong> ${a.Tithi}</li>`;
+    if (a.Yog) html += `<li><strong>Yoga:</strong> ${a.Yog}</li>`;
+    if (a.Karan) html += `<li><strong>Karan:</strong> ${a.Karan}</li>`;
+    if (a.tatva) html += `<li><strong>Element (Tatva):</strong> ${a.tatva}</li>`;
+    if (a.Varna) html += `<li><strong>Varna:</strong> ${a.Varna}</li>`;
+    if (a.Yoni) html += `<li><strong>Yoni:</strong> ${a.Yoni}</li>`;
+    if (a.Gan) html += `<li><strong>Gana:</strong> ${a.Gan}</li>`;
+    if (a.Nadi) html += `<li><strong>Nadi:</strong> ${a.Nadi}</li>`;
+    if (a.paya) html += `<li><strong>Paya:</strong> ${a.paya}</li>`;
+    if (a.name_alphabet) html += `<li><strong>Favourable Name Letter:</strong> ${a.name_alphabet}</li>`;
     html += `</ul>`;
 
-    // Planet Positions
-    if (chart.natalPlanets && Array.isArray(chart.natalPlanets) && chart.natalPlanets.length > 0) {
-      html += `<h2>3. Planetary Positions</h2>`;
-      html += `<ul>`;
-      chart.natalPlanets.forEach((planet: any) => {
-        if (planet.name && planet.sign) {
-          const retro = planet.isRetro === 'true' || planet.isRetro === true ? ' (Retrograde)' : '';
-          const house = planet.house ? ` — House ${planet.house}` : '';
-          html += `<li><strong>${planet.name}:</strong> ${planet.sign}${house}${retro}</li>`;
+    // Planets
+    if (chart.natalPlanets && Array.isArray(chart.natalPlanets)) {
+      html += `<h2>3. Planetary Positions</h2><ul>`;
+      chart.natalPlanets.forEach((p: any) => {
+        if (p.name && p.sign) {
+          const retro = (p.isRetro === 'true' || p.isRetro === true) ? ' (Retrograde)' : '';
+          const house = p.house ? ` — House ${p.house}` : '';
+          html += `<li><strong>${p.name}:</strong> ${p.sign}${house}${retro}</li>`;
         }
       });
       html += `</ul>`;
     }
 
+    // House report (interpretation text)
+    if (chart.generalHouseReport) {
+      const hr = chart.generalHouseReport;
+      const reports = hr.house_report || hr.report || (Array.isArray(hr) ? hr : null);
+      if (reports && Array.isArray(reports) && reports.length > 0) {
+        html += `<h2>4. Personality & Life Reading</h2>`;
+        reports.slice(0, 6).forEach((r: any) => {
+          const text = r.house_report || r.report_text || r;
+          if (typeof text === 'string') html += `<p>${text}</p>`;
+        });
+      }
+    }
+
     // Dasha
     if (chart.dashaDetails) {
       const d = chart.dashaDetails;
-      html += `<h2>4. Current Dasha Period</h2>`;
-      html += `<ul>`;
-      
-      const major = d.major_dasha || d.dasha || (d.dasha_periods && d.dasha_periods[0]);
-      if (major) {
-        const planet = major?.planet || major?.name || major;
-        html += `<li><strong>Major Dasha (Mahadasha):</strong> ${planet}</li>`;
-      }
-      const sub = d.sub_dasha || d.antardasha || d.bhukti;
-      if (sub) {
-        const planet = sub?.planet || sub?.name || sub;
-        html += `<li><strong>Sub Dasha (Antardasha):</strong> ${planet}</li>`;
-      }
+      html += `<h2>5. Current Planetary Period (Dasha)</h2><ul>`;
+      const major = d.major || d.major_dasha || d.dasha;
+      if (major) html += `<li><strong>Mahadasha:</strong> ${major?.planet || major?.name || major}</li>`;
+      const minor = d.minor || d.sub_dasha || d.antardasha;
+      if (minor) html += `<li><strong>Antardasha:</strong> ${minor?.planet || minor?.name || minor}</li>`;
       html += `</ul>`;
-      html += `<p>The current planetary period influences your life themes and timing. Use this period for activities aligned with the ruling planet's energy.</p>`;
     }
-
-    // Kundali (Prokerala)
-    if (chart.kundaliDetails) {
-      const k = chart.kundaliDetails;
-      html += `<h2>5. Kundali Details</h2>`;
-      html += `<ul>`;
-      if (k.nakshatra_details?.nakshatra) {
-        html += `<li><strong>Nakshatra:</strong> ${k.nakshatra_details.nakshatra.name}</li>`;
-      }
-      if (k.nakshatra_details?.chandra_rasi) {
-        html += `<li><strong>Moon Sign:</strong> ${k.nakshatra_details.chandra_rasi.name}</li>`;
-      }
-      if (k.mangal_dosha) {
-        html += `<li><strong>Mangal Dosha:</strong> ${k.mangal_dosha.has_dosha ? 'Present' : 'Not Present'}</li>`;
-      }
-      if (k.yoga_details && Array.isArray(k.yoga_details)) {
-        k.yoga_details.slice(0, 5).forEach((yoga: any) => {
-          if (yoga.name) html += `<li><strong>Yoga:</strong> ${yoga.name}</li>`;
-        });
-      }
+  } else if (chart.source === 'prokerala') {
+    html += `<h2>2. Vedic Birth Profile (Prokerala)</h2><ul>`;
+    if (chart.nakshatra) html += `<li><strong>Nakshatra:</strong> ${chart.nakshatra}</li>`;
+    if (chart.moonSign) html += `<li><strong>Moon Sign:</strong> ${chart.moonSign}</li>`;
+    html += `</ul>`;
+    if (chart.dashaDetails?.dasha_periods) {
+      html += `<h2>3. Dasha Periods</h2><ul>`;
+      chart.dashaDetails.dasha_periods.slice(0, 3).forEach((d: any) => {
+        if (d.name) html += `<li><strong>${d.name}</strong></li>`;
+      });
       html += `</ul>`;
     }
   } else {
     html += `<h2>2. Astrology Chart</h2>`;
-    html += `<p>Detailed chart data is being prepared. Your numerology profile above provides key insights into your life path.</p>`;
+    html += `<p>Chart data is being prepared. Your numerology profile above provides key insights.</p>`;
   }
 
   // Questions
   if (input.questions) {
-    html += `<h2>Your Questions</h2>`;
-    html += `<p><em>"${input.questions}"</em></p>`;
-    html += `<p>These areas of inquiry can be explored through the planetary positions and dasha periods shown above. Consider consulting for a detailed personal session.</p>`;
+    html += `<h2>Your Questions</h2><p><em>"${input.questions}"</em></p>`;
+    html += `<p>These areas can be explored through the planetary positions and dasha periods above.</p>`;
   }
 
-  // Footer
-  html += `<h2>Activation Recommendations</h2>`;
-  html += `<ul>`;
-  html += `<li><strong>Focus Period:</strong> Personal Year ${input.personalYear} themes</li>`;
-  html += `<li><strong>Life Path ${input.lifePathNumber}:</strong> Align actions with your core nature</li>`;
+  html += `<h2>Activation Recommendations</h2><ul>`;
+  html += `<li><strong>Personal Year ${input.personalYear}:</strong> Focus on its core themes</li>`;
+  html += `<li><strong>Life Path ${input.lifePathNumber}:</strong> Align actions with your nature</li>`;
   html += `</ul>`;
-  html += `<p style="margin-top:20px;font-style:italic;">This blueprint is prepared by NAKSH369 using authentic Vedic calculations. For spiritual guidance and personal reflection.</p>`;
-
+  html += `<p style="margin-top:20px;font-style:italic;">For spiritual guidance and reflection only. Not professional advice. Prepared by NAKSH369 using authentic Vedic calculations.</p>`;
   html += `</div>`;
   return html;
 }
